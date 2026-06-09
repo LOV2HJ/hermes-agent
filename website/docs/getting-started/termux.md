@@ -132,13 +132,66 @@ hermes
 
 ## Recommended follow-up setup
 
-### Configure a model
+### Configure a local LLM
+
+Hermes can use local OpenAI-compatible servers on Android. The fastest path is
+the helper script included in this repo:
+
+```bash
+# LM Studio, default http://127.0.0.1:1234/v1
+scripts/termux-local-llm.sh lmstudio qwen3.5-9b-deepseek-v4-flash
+
+# Ollama, default http://127.0.0.1:11434/v1
+scripts/termux-local-llm.sh ollama qwen3.5:9b
+
+# llama.cpp / llama-server, default http://127.0.0.1:8080/v1
+scripts/termux-local-llm.sh llamacpp local-model
+```
+
+If the model server is running on another machine on your LAN, pass its URL as
+the third argument:
+
+```bash
+scripts/termux-local-llm.sh lmstudio qwen3.5-9b-deepseek-v4-flash http://192.168.0.20:1234/v1
+scripts/termux-local-llm.sh ollama qwen3.5:9b http://192.168.0.20:11434/v1
+```
+
+The script writes:
+
+- `~/.hermes/config.yaml`
+- `~/.hermes/.env`
+
+It also sets longer local-model timeouts, local terminal backend defaults, and
+auxiliary model routing so summarization/compression paths use the same local
+server instead of silently requiring a cloud provider.
+
+After configuring:
+
+```bash
+hermes doctor
+hermes
+```
+
+### Configure a cloud/API-key model
 
 ```bash
 hermes model
 ```
 
 Or set keys directly in `~/.hermes/.env`.
+
+### Local server notes
+
+For LM Studio, enable the local server from LM Studio's Developer tab. On a
+separate desktop, bind the server to your LAN interface and pass the LAN URL to
+`termux-local-llm.sh`.
+
+For Ollama, Hermes uses the local OpenAI-compatible endpoint at `/v1`. If
+Ollama is running on another device, set `OLLAMA_HOST=0.0.0.0:11434` there and
+use that device's LAN IP from Termux.
+
+For llama.cpp, start `llama-server` with OpenAI-compatible mode and point Hermes
+at the `/v1` URL.
 
 ### Re-run the full interactive setup wizard later
 
