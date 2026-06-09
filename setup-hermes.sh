@@ -194,6 +194,17 @@ if is_termux; then
     export ANDROID_API_LEVEL="$(getprop ro.build.version.sdk 2>/dev/null || printf '%s' "${ANDROID_API_LEVEL:-}")"
     echo -e "${CYAN}→${NC} Termux detected — installing the tested Android bundle"
     "$SETUP_PYTHON" -m pip install --upgrade pip setuptools wheel
+    # psutil 7.2.x currently aborts on sys.platform == "android" even though
+    # it can build on Termux when it reuses the Linux source path. Preinstall
+    # the patched sdist before `pip install -e .` resolves core dependencies.
+    if [ -f "$SCRIPT_DIR/scripts/install_psutil_android.py" ]; then
+        echo -e "${CYAN}→${NC} Prebuilding psutil Android compatibility shim..."
+        if "$SETUP_PYTHON" "$SCRIPT_DIR/scripts/install_psutil_android.py" --pip "$SETUP_PYTHON -m pip"; then
+            echo -e "${GREEN}✓${NC} psutil Android shim installed"
+        else
+            echo -e "${YELLOW}⚠${NC} psutil Android shim failed; continuing so pip can report the full error"
+        fi
+    fi
     if [ -f "constraints-termux.txt" ]; then
         "$SETUP_PYTHON" -m pip install -e ".[termux]" -c constraints-termux.txt || {
             echo -e "${YELLOW}⚠${NC} Termux bundle install failed, falling back to base install..."
